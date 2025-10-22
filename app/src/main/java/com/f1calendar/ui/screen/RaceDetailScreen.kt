@@ -1,5 +1,6 @@
 package com.f1calendar.ui.screen
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,7 +15,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.f1calendar.data.model.QualifyingResult
@@ -126,73 +131,38 @@ private fun RaceDetailsView(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
 
-                    // Simple track map view
+                    // Track map view
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "TRACK LAYOUT",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(150.dp),
+                            .height(180.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                                .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Background decorative element
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .align(Alignment.BottomEnd)
-                                    .offset(x = 20.dp, y = 20.dp)
+                            TrackMapView(
+                                trackColor = MaterialTheme.colorScheme.primary,
+                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
                             )
-
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.LocationOn,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "TRACK LOCATION",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    text = race.circuit.circuitId.replace("_", " ").uppercase(),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = "Coordinates: ${race.circuit.location.lat}°, ${race.circuit.location.long}°",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                )
-                            }
                         }
                     }
                 }
@@ -208,72 +178,133 @@ private fun RaceDetailsView(
             )
         }
 
-        // Practice 1
-        race.firstPractice?.let { session ->
-            item {
-                SessionCard(
-                    name = "Practice 1",
-                    date = session.date,
-                    time = session.time,
-                    isCompleted = isCompleted,
-                    onClick = if (isCompleted) null else null // Practice results not typically shown
-                )
+        // Check if this is a sprint weekend
+        val isSprint = race.sprint != null
+
+        if (isSprint) {
+            // Sprint weekend order: FP1, Sprint Qualifying, Sprint, Qualifying, Race
+
+            // Practice 1
+            race.firstPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 1",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice1") } } else null
+                    )
+                }
+            }
+
+            // Sprint Qualifying (this is the qualifying session on sprint weekends)
+            race.qualifying?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Sprint Qualifying",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("SprintQualifying") } } else null
+                    )
+                }
+            }
+
+            // Sprint
+            race.sprint?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Sprint",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Sprint") } } else null
+                    )
+                }
+            }
+
+            // Practice 2 (some sprint weekends have this)
+            race.secondPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 2",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice2") } } else null
+                    )
+                }
+            }
+
+            // Practice 3 (some sprint weekends have this)
+            race.thirdPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 3",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice3") } } else null
+                    )
+                }
+            }
+        } else {
+            // Normal weekend: FP1, FP2, FP3, Qualifying, Race
+
+            // Practice 1
+            race.firstPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 1",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice1") } } else null
+                    )
+                }
+            }
+
+            // Practice 2
+            race.secondPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 2",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice2") } } else null
+                    )
+                }
+            }
+
+            // Practice 3
+            race.thirdPractice?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Practice 3",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Practice3") } } else null
+                    )
+                }
+            }
+
+            // Qualifying
+            race.qualifying?.let { session ->
+                item {
+                    SessionCard(
+                        name = "Qualifying",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("Qualifying") } } else null
+                    )
+                }
             }
         }
 
-        // Practice 2
-        race.secondPractice?.let { session ->
-            item {
-                SessionCard(
-                    name = "Practice 2",
-                    date = session.date,
-                    time = session.time,
-                    isCompleted = isCompleted,
-                    onClick = null
-                )
-            }
-        }
-
-        // Practice 3
-        race.thirdPractice?.let { session ->
-            item {
-                SessionCard(
-                    name = "Practice 3",
-                    date = session.date,
-                    time = session.time,
-                    isCompleted = isCompleted,
-                    onClick = null
-                )
-            }
-        }
-
-        // Qualifying
-        race.qualifying?.let { session ->
-            item {
-                SessionCard(
-                    name = "Qualifying",
-                    date = session.date,
-                    time = session.time,
-                    isCompleted = isCompleted,
-                    onClick = if (isCompleted) { { onSessionClick("Qualifying") } } else null
-                )
-            }
-        }
-
-        // Sprint
-        race.sprint?.let { session ->
-            item {
-                SessionCard(
-                    name = "Sprint",
-                    date = session.date,
-                    time = session.time,
-                    isCompleted = isCompleted,
-                    onClick = if (isCompleted) { { onSessionClick("Sprint") } } else null
-                )
-            }
-        }
-
-        // Race
+        // Race (always last)
         race.time?.let { time ->
             item {
                 SessionCard(
@@ -633,6 +664,115 @@ private fun QualifyingResultCard(result: QualifyingResult) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TrackMapView(
+    trackColor: Color,
+    backgroundColor: Color
+) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+    ) {
+        val width = size.width
+        val height = size.height
+        val strokeWidth = 8f
+
+        // Draw a generic racing circuit layout
+        val path = Path().apply {
+            // Start/Finish straight
+            moveTo(width * 0.1f, height * 0.5f)
+            lineTo(width * 0.35f, height * 0.5f)
+
+            // First corner (hairpin turn)
+            cubicTo(
+                width * 0.45f, height * 0.5f,
+                width * 0.5f, height * 0.6f,
+                width * 0.5f, height * 0.7f
+            )
+
+            // Back straight
+            cubicTo(
+                width * 0.5f, height * 0.8f,
+                width * 0.6f, height * 0.85f,
+                width * 0.75f, height * 0.8f
+            )
+
+            // Chicane
+            cubicTo(
+                width * 0.85f, height * 0.77f,
+                width * 0.88f, height * 0.65f,
+                width * 0.85f, height * 0.55f
+            )
+
+            // Final corner
+            cubicTo(
+                width * 0.82f, height * 0.45f,
+                width * 0.75f, height * 0.35f,
+                width * 0.65f, height * 0.3f
+            )
+
+            // Long sweeping turn back to start
+            cubicTo(
+                width * 0.5f, height * 0.23f,
+                width * 0.3f, height * 0.25f,
+                width * 0.15f, height * 0.35f
+            )
+
+            cubicTo(
+                width * 0.08f, height * 0.4f,
+                width * 0.08f, height * 0.45f,
+                width * 0.1f, height * 0.5f
+            )
+        }
+
+        // Draw track background (wider)
+        drawPath(
+            path = path,
+            color = backgroundColor,
+            style = Stroke(
+                width = strokeWidth + 16f,
+                cap = StrokeCap.Round
+            )
+        )
+
+        // Draw track line
+        drawPath(
+            path = path,
+            color = trackColor,
+            style = Stroke(
+                width = strokeWidth,
+                cap = StrokeCap.Round
+            )
+        )
+
+        // Draw start/finish line
+        drawLine(
+            color = trackColor,
+            start = Offset(width * 0.1f, height * 0.45f),
+            end = Offset(width * 0.1f, height * 0.55f),
+            strokeWidth = strokeWidth * 1.5f,
+            cap = StrokeCap.Round
+        )
+
+        // Draw checkered pattern on start/finish
+        val checkSize = 4f
+        for (i in 0..3) {
+            val y = height * 0.45f + (i * checkSize * 2)
+            drawCircle(
+                color = if (i % 2 == 0) Color.White else trackColor,
+                radius = checkSize,
+                center = Offset(width * 0.1f - checkSize, y)
+            )
+            drawCircle(
+                color = if (i % 2 == 0) trackColor else Color.White,
+                radius = checkSize,
+                center = Offset(width * 0.1f + checkSize, y)
+            )
         }
     }
 }
