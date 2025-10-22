@@ -41,4 +41,12 @@ class DriverStandingsViewModel(
     fun refresh() {
         loadStandings()
     }
+
+    suspend fun getDriverResults(driverId: String): List<F1Repository.DriverRaceResult> {
+        var results = emptyList<F1Repository.DriverRaceResult>()
+        repository.getDriverSeasonResults(driverId).collect { result ->
+            result.onSuccess { results = it }
+        }
+        return results
+    }
 }

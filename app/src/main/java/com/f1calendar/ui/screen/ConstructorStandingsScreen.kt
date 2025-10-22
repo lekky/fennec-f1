@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -31,6 +32,9 @@ fun ConstructorStandingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedConstructor by remember { mutableStateOf<ConstructorStanding?>(null) }
+    var constructorResults by remember { mutableStateOf<List<RacePoints>>(emptyList()) }
+    var isLoadingResults by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
@@ -46,7 +50,22 @@ fun ConstructorStandingsScreen(
             is ConstructorStandingsUiState.Success -> {
                 ConstructorStandingsList(
                     standings = state.standings,
-                    onConstructorClick = { selectedConstructor = it }
+                    onConstructorClick = { constructor ->
+                        selectedConstructor = constructor
+                        isLoadingResults = true
+                        coroutineScope.launch {
+                            val results = viewModel.getConstructorResults(constructor.constructor.constructorId)
+                            constructorResults = results.map { result ->
+                                RacePoints(
+                                    raceName = result.raceName,
+                                    round = result.round,
+                                    position = null, // Constructors don't have a single position
+                                    points = result.points.toString()
+                                )
+                            }
+                            isLoadingResults = false
+                        }
+                    }
                 )
             }
 
@@ -67,38 +86,39 @@ fun ConstructorStandingsScreen(
         }
     }
 
+    // Show loading dialog while fetching results
+    if (isLoadingResults) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Loading race results...") },
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            },
+            confirmButton = { }
+        )
+    }
+
     // Show points breakdown dialog
-    selectedConstructor?.let { constructor ->
+    if (!isLoadingResults && selectedConstructor != null) {
+        val constructor = selectedConstructor!!
         val teamColor = TeamColors.getTeamColor(constructor.constructor.constructorId)
-        val racePoints = createMockConstructorPointsBreakdown(constructor.points.toIntOrNull() ?: 0)
 
         ConstructorPointsBreakdownDialog(
             constructor = constructor.constructor,
             teamColor = teamColor,
-            racePoints = racePoints,
+            racePoints = constructorResults,
             totalPoints = constructor.points,
-            onDismiss = { selectedConstructor = null }
-        )
-    }
-}
-
-// Helper function to create sample breakdown
-private fun createMockConstructorPointsBreakdown(totalPoints: Int): List<RacePoints> {
-    val races = listOf(
-        "Bahrain GP", "Saudi Arabian GP", "Australian GP", "Japanese GP",
-        "Chinese GP", "Miami GP", "Emilia Romagna GP", "Monaco GP"
-    )
-
-    return races.mapIndexed { index, raceName ->
-        val points = if (totalPoints > 0 && index < 5) {
-            (totalPoints / 5).coerceAtMost(44) // Max 44 points (1-2 finish + fastest lap)
-        } else 0
-
-        RacePoints(
-            raceName = raceName,
-            round = index + 1,
-            position = if (points > 0) "1-2" else null, // Show as team result
-            points = points.toString()
+            onDismiss = {
+                selectedConstructor = null
+                constructorResults = emptyList()
+            }
         )
     }
 }

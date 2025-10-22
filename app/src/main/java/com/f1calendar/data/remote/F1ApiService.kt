@@ -40,4 +40,21 @@ interface F1ApiService {
     suspend fun getConstructorStandings(
         @Path("season") season: String = "current"
     ): ApiResponse<StandingsTable>
+
+    @GET("f1/{season}/drivers/{driverId}/results")
+    suspend fun getDriverResults(
+        @Path("season") season: String,
+        @Path("driverId") driverId: String
+    ): ApiResponse<RaceTable>
+
+    @GET("f1/{season}/constructors/{constructorId}/results")
+    suspend fun getConstructorResults(
+        @Path("season") season: String,
+        @Path("constructorId") constructorId: String
+    ): ApiResponse<RaceTable>
+
+    @GET("f1/{season}/results")
+    suspend fun getAllSeasonResults(
+        @Path("season") season: String = "current"
+    ): ApiResponse<RaceTable>
 }

@@ -107,6 +107,64 @@ class F1Repository(
         }
     }
 
+    data class DriverRaceResult(
+        val raceName: String,
+        val round: Int,
+        val position: String,
+        val points: String
+    )
+
+    fun getDriverSeasonResults(driverId: String): Flow<Result<List<DriverRaceResult>>> = flow {
+        try {
+            AppLogger.d("F1Repository", "getDriverSeasonResults() - Fetching for driver: $driverId")
+            val response = apiService.getDriverResults(getCurrentSeason(), driverId)
+            val allResults = response.mrData.raceTable?.races?.mapNotNull { race ->
+                race.results?.firstOrNull()?.let { result ->
+                    DriverRaceResult(
+                        raceName = race.raceName,
+                        round = race.round.toInt(),
+                        position = result.position,
+                        points = result.points
+                    )
+                }
+            } ?: emptyList()
+            AppLogger.i("F1Repository", "getDriverSeasonResults() - Got ${allResults.size} results")
+            emit(Result.success(allResults))
+        } catch (e: Exception) {
+            AppLogger.e("F1Repository", "getDriverSeasonResults() - Error: ${e.message}", e)
+            emit(Result.failure(e))
+        }
+    }
+
+    data class ConstructorRaceResult(
+        val raceName: String,
+        val round: Int,
+        val points: Int
+    )
+
+    fun getConstructorSeasonResults(constructorId: String): Flow<Result<List<ConstructorRaceResult>>> = flow {
+        try {
+            AppLogger.d("F1Repository", "getConstructorSeasonResults() - Fetching for: $constructorId")
+            val response = apiService.getConstructorResults(getCurrentSeason(), constructorId)
+
+            // Group by round and sum points for both drivers
+            val results = response.mrData.raceTable?.races?.map { race ->
+                val roundPoints = race.results?.sumOf { it.points.toIntOrNull() ?: 0 } ?: 0
+                ConstructorRaceResult(
+                    raceName = race.raceName,
+                    round = race.round.toInt(),
+                    points = roundPoints
+                )
+            } ?: emptyList()
+
+            AppLogger.i("F1Repository", "getConstructorSeasonResults() - Got ${results.size} rounds")
+            emit(Result.success(results))
+        } catch (e: Exception) {
+            AppLogger.e("F1Repository", "getConstructorSeasonResults() - Error: ${e.message}", e)
+            emit(Result.failure(e))
+        }
+    }
+
     private fun getCurrentSeason(): String {
         // Jolpica F1 API supports 2025 season data
         return Calendar.getInstance().get(Calendar.YEAR).toString()

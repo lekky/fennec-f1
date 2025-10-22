@@ -41,4 +41,12 @@ class ConstructorStandingsViewModel(
     fun refresh() {
         loadStandings()
     }
+
+    suspend fun getConstructorResults(constructorId: String): List<F1Repository.ConstructorRaceResult> {
+        var results = emptyList<F1Repository.ConstructorRaceResult>()
+        repository.getConstructorSeasonResults(constructorId).collect { result ->
+            result.onSuccess { results = it }
+        }
+        return results
+    }
 }
