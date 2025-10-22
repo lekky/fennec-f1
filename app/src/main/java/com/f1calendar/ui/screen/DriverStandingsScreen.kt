@@ -52,12 +52,18 @@ fun DriverStandingsScreen(
                         isLoadingResults = true
                         coroutineScope.launch {
                             val results = viewModel.getDriverResults(driver.driver.driverId)
+
+                            // Calculate running totals
+                            var runningTotal = 0.0
                             driverResults = results.map { result ->
+                                val pointsEarned = result.points.toDoubleOrNull() ?: 0.0
+                                runningTotal += pointsEarned
                                 RacePoints(
                                     raceName = result.raceName,
                                     round = result.round,
                                     position = result.position,
-                                    points = result.points
+                                    points = result.points,
+                                    runningTotal = runningTotal.toInt().toString()
                                 )
                             }
                             isLoadingResults = false

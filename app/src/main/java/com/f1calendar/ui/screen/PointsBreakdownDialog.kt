@@ -21,7 +21,8 @@ data class RacePoints(
     val raceName: String,
     val round: Int,
     val position: String?,
-    val points: String
+    val points: String,
+    val runningTotal: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,16 +140,30 @@ fun RacePointCard(
                 )
             }
 
-            // Points
-            Text(
-                text = if (racePoint.points == "0") "-" else "+${racePoint.points}",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (racePoint.points == "0")
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                else
-                    teamColor
-            )
+            // Points and running total
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                // Points earned
+                Text(
+                    text = if (racePoint.points == "0") "-" else "+${racePoint.points}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (racePoint.points == "0")
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    else
+                        teamColor
+                )
+
+                // Running total
+                racePoint.runningTotal?.let { total ->
+                    Text(
+                        text = "$total pts",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
         }
     }
 }

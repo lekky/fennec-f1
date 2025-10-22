@@ -149,6 +149,7 @@ private fun RaceCard(
     onClick: () -> Unit
 ) {
     val isCompleted = DateTimeUtil.isRaceCompleted(race.date)
+    val flagColor = CountryFlags.getFlag(race.circuit.location.country)
 
     Card(
         modifier = Modifier
@@ -157,101 +158,156 @@ private fun RaceCard(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted)
-                MaterialTheme.colorScheme.surfaceVariant
-            else
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Country flag color indicator
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Round number badge
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isCompleted)
+                            MaterialTheme.colorScheme.surfaceVariant
+                        else
+                            MaterialTheme.colorScheme.primaryContainer
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "${CountryFlags.getFlag(race.circuit.location.country)} ${race.raceName}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    text = race.round.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isCompleted)
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.onPrimaryContainer
                 )
-
-                if (isCompleted) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Completed",
-                        tint = Color(0xFF4CAF50)
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = "Upcoming",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = race.circuit.circuitName,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
+            // Race info
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = flagColor,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = race.raceName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-            Text(
-                text = "📍 ${race.circuit.location.locality}, ${race.circuit.location.country}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
                 Text(
-                    text = "Round ${race.round}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
+                    text = race.circuit.circuitName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+
+                Text(
+                    text = "${race.circuit.location.locality}, ${race.circuit.location.country}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = DateTimeUtil.formatDateRange(race.date),
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
                 )
-            }
 
-            if (!isCompleted) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(8.dp))
+                // Show session times for upcoming races
+                if (!isCompleted) {
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    race.firstPractice?.let {
-                        SessionTimeText("FP1", it.date, it.time)
-                    }
-                    race.secondPractice?.let {
-                        SessionTimeText("FP2", it.date, it.time)
-                    }
-                    race.thirdPractice?.let {
-                        SessionTimeText("FP3", it.date, it.time)
-                    }
-                    race.qualifying?.let {
-                        SessionTimeText("Qualifying", it.date, it.time)
-                    }
-                    race.sprint?.let {
-                        SessionTimeText("Sprint", it.date, it.time)
-                    }
-                    race.time?.let {
-                        SessionTimeText("Race", race.date, it)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        // Check if this is a sprint weekend
+                        val isSprint = race.sprint != null
+
+                        if (isSprint) {
+                            // Sprint weekend order
+                            race.firstPractice?.let {
+                                SessionTimeText("FP1", it.date, it.time)
+                            }
+                            race.qualifying?.let {
+                                SessionTimeText("Sprint Qualifying", it.date, it.time)
+                            }
+                            race.secondPractice?.let {
+                                SessionTimeText("FP2", it.date, it.time)
+                            }
+                            race.sprint?.let {
+                                SessionTimeText("Sprint", it.date, it.time)
+                            }
+                            race.thirdPractice?.let {
+                                SessionTimeText("FP3", it.date, it.time)
+                            }
+                            // Main qualifying happens after sprint on sprint weekends (if there's a separate session)
+                            race.time?.let {
+                                SessionTimeText("Race", race.date, it)
+                            }
+                        } else {
+                            // Normal weekend order
+                            race.firstPractice?.let {
+                                SessionTimeText("FP1", it.date, it.time)
+                            }
+                            race.secondPractice?.let {
+                                SessionTimeText("FP2", it.date, it.time)
+                            }
+                            race.thirdPractice?.let {
+                                SessionTimeText("FP3", it.date, it.time)
+                            }
+                            race.qualifying?.let {
+                                SessionTimeText("Qualifying", it.date, it.time)
+                            }
+                            race.time?.let {
+                                SessionTimeText("Race", race.date, it)
+                            }
+                        }
                     }
                 }
+            }
+
+            // Status icon
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Completed",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = "Upcoming",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

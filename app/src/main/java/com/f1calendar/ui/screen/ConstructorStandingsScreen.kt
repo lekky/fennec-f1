@@ -57,12 +57,17 @@ fun ConstructorStandingsScreen(
                         isLoadingResults = true
                         coroutineScope.launch {
                             val results = viewModel.getConstructorResults(constructor.constructor.constructorId)
+
+                            // Calculate running totals
+                            var runningTotal = 0
                             constructorResults = results.map { result ->
+                                runningTotal += result.points
                                 RacePoints(
                                     raceName = result.raceName,
                                     round = result.round,
                                     position = null, // Constructors don't have a single position
-                                    points = result.points.toString()
+                                    points = result.points.toString(),
+                                    runningTotal = runningTotal.toString()
                                 )
                             }
                             isLoadingResults = false
