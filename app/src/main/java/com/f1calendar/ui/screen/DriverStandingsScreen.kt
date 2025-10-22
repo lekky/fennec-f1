@@ -1,15 +1,14 @@
 package com.f1calendar.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +26,7 @@ fun DriverStandingsScreen(
     viewModel: DriverStandingsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedDriver by remember { mutableStateOf<DriverStanding?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
@@ -40,7 +40,10 @@ fun DriverStandingsScreen(
             }
 
             is DriverStandingsUiState.Success -> {
-                DriverStandingsList(standings = state.standings)
+                DriverStandingsList(
+                    standings = state.standings,
+                    onDriverClick = { selectedDriver = it }
+                )
             }
 
             is DriverStandingsUiState.Error -> {
@@ -59,11 +62,51 @@ fun DriverStandingsScreen(
             }
         }
     }
+
+    // Show points breakdown dialog
+    selectedDriver?.let { driver ->
+        val teamColor = driver.constructors.firstOrNull()?.let {
+            TeamColors.getTeamColor(it.constructorId)
+        } ?: Color.Gray
+
+        // Create mock points breakdown (you could fetch real data here)
+        val racePoints = createMockPointsBreakdown(driver.points.toIntOrNull() ?: 0)
+
+        DriverPointsBreakdownDialog(
+            driver = driver.driver,
+            teamColor = teamColor,
+            racePoints = racePoints,
+            totalPoints = driver.points,
+            onDismiss = { selectedDriver = null }
+        )
+    }
+}
+
+// Helper function to create sample breakdown
+private fun createMockPointsBreakdown(totalPoints: Int): List<RacePoints> {
+    val races = listOf(
+        "Bahrain GP", "Saudi Arabian GP", "Australian GP", "Japanese GP",
+        "Chinese GP", "Miami GP", "Emilia Romagna GP", "Monaco GP"
+    )
+
+    return races.mapIndexed { index, raceName ->
+        val points = if (totalPoints > 0 && index < 5) {
+            (totalPoints / 5).coerceAtMost(25)
+        } else 0
+
+        RacePoints(
+            raceName = raceName,
+            round = index + 1,
+            position = if (points > 0) ((1..10).random().toString()) else null,
+            points = points.toString()
+        )
+    }
 }
 
 @Composable
 private fun DriverStandingsList(
-    standings: List<DriverStanding>
+    standings: List<DriverStanding>,
+    onDriverClick: (DriverStanding) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -83,7 +126,8 @@ private fun DriverStandingsList(
             DriverStandingCard(
                 standing = standing,
                 position = index + 1,
-                leaderPoints = standings.firstOrNull()?.points?.toDoubleOrNull() ?: 0.0
+                leaderPoints = standings.firstOrNull()?.points?.toDoubleOrNull() ?: 0.0,
+                onClick = { onDriverClick(standing) }
             )
         }
     }
@@ -93,14 +137,17 @@ private fun DriverStandingsList(
 private fun DriverStandingCard(
     standing: DriverStanding,
     position: Int,
-    leaderPoints: Double
+    leaderPoints: Double,
+    onClick: () -> Unit
 ) {
     val teamColor = standing.constructors.firstOrNull()?.let {
         TeamColors.getTeamColor(it.constructorId)
     } ?: Color.Gray
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {

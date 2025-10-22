@@ -3,7 +3,10 @@ package com.f1calendar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material3.*
@@ -19,6 +22,7 @@ import com.f1calendar.ui.screen.LogViewerDialog
 import com.f1calendar.ui.screen.RacesScreen
 import com.f1calendar.ui.theme.F1CalendarTheme
 import com.f1calendar.ui.viewmodel.*
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var racesViewModel: RacesViewModel
@@ -46,15 +50,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
     fun F1CalendarApp() {
-        var selectedTab by remember { mutableStateOf(0) }
         var currentRace by remember { mutableStateOf<Race?>(null) }
         var showLogViewer by remember { mutableStateOf(false) }
         val navController = rememberNavController()
-
         val tabs = listOf("Races", "Drivers", "Constructors")
+        val pagerState = rememberPagerState(pageCount = { tabs.size })
+        val coroutineScope = rememberCoroutineScope()
 
         Scaffold(
             topBar = {
@@ -82,30 +86,39 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column {
                         // Tab Row
-                        TabRow(selectedTabIndex = selectedTab) {
+                        TabRow(selectedTabIndex = pagerState.currentPage) {
                             tabs.forEachIndexed { index, title ->
                                 Tab(
-                                    selected = selectedTab == index,
-                                    onClick = { selectedTab = index },
+                                    selected = pagerState.currentPage == index,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    },
                                     text = { Text(title) }
                                 )
                             }
                         }
 
-                        // Tab Content
-                        when (selectedTab) {
-                            0 -> RacesScreen(
-                                viewModel = racesViewModel,
-                                onRaceClick = { race ->
-                                    currentRace = race
-                                    navController.navigate(
-                                        Screen.RaceDetail.createRoute(race.round, race.raceName)
-                                    )
-                                }
-                            )
+                        // Swipeable Tab Content
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { page ->
+                            when (page) {
+                                0 -> RacesScreen(
+                                    viewModel = racesViewModel,
+                                    onRaceClick = { race ->
+                                        currentRace = race
+                                        navController.navigate(
+                                            Screen.RaceDetail.createRoute(race.round, race.raceName)
+                                        )
+                                    }
+                                )
 
-                            1 -> DriverStandingsScreen(viewModel = driverStandingsViewModel)
-                            2 -> ConstructorStandingsScreen(viewModel = constructorStandingsViewModel)
+                                1 -> DriverStandingsScreen(viewModel = driverStandingsViewModel)
+                                2 -> ConstructorStandingsScreen(viewModel = constructorStandingsViewModel)
+                            }
                         }
                     }
                 }
