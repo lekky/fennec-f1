@@ -80,7 +80,11 @@ private fun DriverStandingsList(
         }
 
         itemsIndexed(standings) { index, standing ->
-            DriverStandingCard(standing = standing, position = index + 1)
+            DriverStandingCard(
+                standing = standing,
+                position = index + 1,
+                leaderPoints = standings.firstOrNull()?.points?.toDoubleOrNull() ?: 0.0
+            )
         }
     }
 }
@@ -88,7 +92,8 @@ private fun DriverStandingsList(
 @Composable
 private fun DriverStandingCard(
     standing: DriverStanding,
-    position: Int
+    position: Int,
+    leaderPoints: Double
 ) {
     val teamColor = standing.constructors.firstOrNull()?.let {
         TeamColors.getTeamColor(it.constructorId)
@@ -183,7 +188,7 @@ private fun DriverStandingCard(
                 )
 
                 if (position > 1) {
-                    val pointsDiff = standings.first().points.toDouble() - standing.points.toDouble()
+                    val pointsDiff = leaderPoints - (standing.points.toDoubleOrNull() ?: 0.0)
                     Text(
                         text = "(-${pointsDiff.toInt()})",
                         style = MaterialTheme.typography.bodySmall,

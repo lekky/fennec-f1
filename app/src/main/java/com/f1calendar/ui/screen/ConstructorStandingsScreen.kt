@@ -80,7 +80,11 @@ private fun ConstructorStandingsList(
         }
 
         itemsIndexed(standings) { index, standing ->
-            ConstructorStandingCard(standing = standing, position = index + 1)
+            ConstructorStandingCard(
+                standing = standing,
+                position = index + 1,
+                leaderPoints = standings.firstOrNull()?.points?.toDoubleOrNull() ?: 0.0
+            )
         }
     }
 }
@@ -88,7 +92,8 @@ private fun ConstructorStandingsList(
 @Composable
 private fun ConstructorStandingCard(
     standing: ConstructorStanding,
-    position: Int
+    position: Int,
+    leaderPoints: Double
 ) {
     val teamColor = TeamColors.getTeamColor(standing.constructor.constructorId)
 
@@ -176,7 +181,7 @@ private fun ConstructorStandingCard(
                 )
 
                 if (position > 1) {
-                    val pointsDiff = standings.first().points.toDouble() - standing.points.toDouble()
+                    val pointsDiff = leaderPoints - (standing.points.toDoubleOrNull() ?: 0.0)
                     if (pointsDiff > 0) {
                         Text(
                             text = "(-${pointsDiff.toInt()})",
