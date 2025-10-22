@@ -85,7 +85,7 @@ fun DriverPointsBreakdownDialog(
 }
 
 @Composable
-private fun RacePointCard(
+fun RacePointCard(
     racePoint: RacePoints,
     teamColor: Color
 ) {
