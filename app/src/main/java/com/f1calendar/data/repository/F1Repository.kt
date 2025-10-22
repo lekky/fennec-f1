@@ -108,9 +108,8 @@ class F1Repository(
     }
 
     private fun getCurrentSeason(): String {
-        // Use "current" to get the latest available season from the API
-        // The API will return the current F1 season regardless of calendar year
-        return "current"
+        // Jolpica F1 API supports 2025 season data
+        return Calendar.getInstance().get(Calendar.YEAR).toString()
     }
 
     private fun RaceResponse.toRace(): Race {

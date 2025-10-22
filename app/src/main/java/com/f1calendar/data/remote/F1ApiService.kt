@@ -8,35 +8,35 @@ import retrofit2.http.Path
 
 interface F1ApiService {
 
-    @GET("api/f1/{season}.json")
+    @GET("f1/{season}/races")
     suspend fun getSeasonRaces(
         @Path("season") season: String = "current"
     ): ApiResponse<RaceTable>
 
-    @GET("api/f1/{season}/{round}/results.json")
+    @GET("f1/{season}/{round}/results")
     suspend fun getRaceResults(
         @Path("season") season: String,
         @Path("round") round: Int
     ): ApiResponse<RaceTable>
 
-    @GET("api/f1/{season}/{round}/qualifying.json")
+    @GET("f1/{season}/{round}/qualifying")
     suspend fun getQualifyingResults(
         @Path("season") season: String,
         @Path("round") round: Int
     ): ApiResponse<RaceTable>
 
-    @GET("api/f1/{season}/{round}/sprint.json")
+    @GET("f1/{season}/{round}/sprint")
     suspend fun getSprintResults(
         @Path("season") season: String,
         @Path("round") round: Int
     ): ApiResponse<RaceTable>
 
-    @GET("api/f1/{season}/driverStandings.json")
+    @GET("f1/{season}/driverstandings")
     suspend fun getDriverStandings(
         @Path("season") season: String = "current"
     ): ApiResponse<StandingsTable>
 
-    @GET("api/f1/{season}/constructorStandings.json")
+    @GET("f1/{season}/constructorstandings")
     suspend fun getConstructorStandings(
         @Path("season") season: String = "current"
     ): ApiResponse<StandingsTable>
