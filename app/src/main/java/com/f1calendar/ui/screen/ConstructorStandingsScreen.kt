@@ -25,6 +25,8 @@ import com.f1calendar.ui.theme.F1Gold
 import com.f1calendar.ui.viewmodel.ConstructorStandingsUiState
 import com.f1calendar.ui.viewmodel.ConstructorStandingsViewModel
 import com.f1calendar.util.TeamColors
+import com.f1calendar.util.TeamLogos
+import coil.compose.AsyncImage
 
 @Composable
 fun ConstructorStandingsScreen(
@@ -226,8 +228,11 @@ private fun ConstructorStandingCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -273,11 +278,31 @@ private fun ConstructorStandingCard(
 
             // Team info
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "🏎️ ${standing.constructor.name}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val logoUrl = TeamLogos.getLogoUrl(standing.constructor.constructorId)
+                    if (logoUrl != null) {
+                        AsyncImage(
+                            model = logoUrl,
+                            contentDescription = "${standing.constructor.name} logo",
+                            modifier = Modifier.size(32.dp),
+                            onError = {
+                                // Fallback to emoji if image fails to load
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    } else {
+                        Text(
+                            text = TeamLogos.getFallbackEmoji(standing.constructor.constructorId),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = standing.constructor.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Text(
                     text = standing.constructor.nationality,

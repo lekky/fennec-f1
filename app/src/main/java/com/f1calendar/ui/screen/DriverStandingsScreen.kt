@@ -20,6 +20,7 @@ import com.f1calendar.data.model.DriverStanding
 import com.f1calendar.ui.theme.F1Gold
 import com.f1calendar.ui.viewmodel.DriverStandingsUiState
 import com.f1calendar.ui.viewmodel.DriverStandingsViewModel
+import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.TeamColors
 
 @Composable
@@ -166,8 +167,11 @@ private fun DriverStandingCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -227,6 +231,11 @@ private fun DriverStandingCard(
                         text = "${standing.driver.givenName} ${standing.driver.familyName}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = CountryFlags.getFlag(standing.driver.nationality),
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
 

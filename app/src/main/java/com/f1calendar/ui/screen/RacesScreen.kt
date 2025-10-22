@@ -8,11 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +23,7 @@ import com.f1calendar.data.model.Race
 import com.f1calendar.ui.theme.F1Gold
 import com.f1calendar.ui.viewmodel.RacesUiState
 import com.f1calendar.ui.viewmodel.RacesViewModel
+import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.DateTimeUtil
 
 @Composable
@@ -68,13 +69,76 @@ private fun RacesList(
     races: List<Race>,
     onRaceClick: (Race) -> Unit
 ) {
+    val upcomingRaces = races.filter { !DateTimeUtil.isRaceCompleted(it.date) }
+    val completedRaces = races.filter { DateTimeUtil.isRaceCompleted(it.date) }
+    var completedExpanded by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(races) { race ->
-            RaceCard(race = race, onClick = { onRaceClick(race) })
+        // Upcoming Races Section
+        if (upcomingRaces.isNotEmpty()) {
+            item {
+                Text(
+                    text = "UPCOMING RACES",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            items(upcomingRaces) { race ->
+                RaceCard(race = race, onClick = { onRaceClick(race) })
+            }
+        }
+
+        // Completed Races Section
+        if (completedRaces.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { completedExpanded = !completedExpanded },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "COMPLETED RACES",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${completedRaces.size} races",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+                        Icon(
+                            imageVector = if (completedExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (completedExpanded) "Collapse" else "Expand"
+                        )
+                    }
+                }
+            }
+
+            if (completedExpanded) {
+                items(completedRaces) { race ->
+                    RaceCard(race = race, onClick = { onRaceClick(race) })
+                }
+            }
         }
     }
 }
@@ -90,8 +154,14 @@ private fun RaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCompleted)
+                MaterialTheme.colorScheme.surfaceVariant
+            else
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -104,7 +174,7 @@ private fun RaceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "🏁 ${race.raceName}",
+                    text = "${CountryFlags.getFlag(race.circuit.location.country)} ${race.raceName}",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
