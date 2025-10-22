@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -13,6 +15,7 @@ import com.f1calendar.ui.navigation.AppNavigation
 import com.f1calendar.ui.navigation.Screen
 import com.f1calendar.ui.screen.ConstructorStandingsScreen
 import com.f1calendar.ui.screen.DriverStandingsScreen
+import com.f1calendar.ui.screen.LogViewerDialog
 import com.f1calendar.ui.screen.RacesScreen
 import com.f1calendar.ui.theme.F1CalendarTheme
 import com.f1calendar.ui.viewmodel.*
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
     fun F1CalendarApp() {
         var selectedTab by remember { mutableStateOf(0) }
         var currentRace by remember { mutableStateOf<Race?>(null) }
+        var showLogViewer by remember { mutableStateOf(false) }
         val navController = rememberNavController()
 
         val tabs = listOf("Races", "Drivers", "Constructors")
@@ -61,6 +65,13 @@ class MainActivity : ComponentActivity() {
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { showLogViewer = true }
+                ) {
+                    Icon(Icons.Filled.BugReport, contentDescription = "View Logs")
+                }
             }
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
@@ -99,6 +110,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+
+        // Log viewer dialog
+        if (showLogViewer) {
+            LogViewerDialog(onDismiss = { showLogViewer = false })
         }
     }
 }

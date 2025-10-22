@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.f1calendar.data.model.Race
 import com.f1calendar.data.repository.F1Repository
+import com.f1calendar.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,11 +29,18 @@ class RacesViewModel(
 
     fun loadRaces() {
         viewModelScope.launch {
+            AppLogger.i("RacesViewModel", "loadRaces() - Starting")
             _uiState.value = RacesUiState.Loading
             repository.getRaces().collect { result ->
                 _uiState.value = result.fold(
-                    onSuccess = { races -> RacesUiState.Success(races) },
-                    onFailure = { error -> RacesUiState.Error(error.message ?: "Unknown error") }
+                    onSuccess = { races ->
+                        AppLogger.i("RacesViewModel", "loadRaces() - Success with ${races.size} races")
+                        RacesUiState.Success(races)
+                    },
+                    onFailure = { error ->
+                        AppLogger.e("RacesViewModel", "loadRaces() - Failed: ${error.message}", error)
+                        RacesUiState.Error(error.message ?: "Unknown error")
+                    }
                 )
             }
         }

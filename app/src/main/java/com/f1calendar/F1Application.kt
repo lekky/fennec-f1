@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.f1calendar.data.local.F1Database
 import com.f1calendar.data.remote.F1ApiService
 import com.f1calendar.data.repository.F1Repository
+import com.f1calendar.util.AppLogger
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -18,7 +19,12 @@ class F1Application : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        AppLogger.i("F1Application", "========================================")
+        AppLogger.i("F1Application", "App starting - F1 Calendar")
+        AppLogger.i("F1Application", "========================================")
+
         // Initialize Room Database
+        AppLogger.d("F1Application", "Initializing Room database")
         val database = Room.databaseBuilder(
             applicationContext,
             F1Database::class.java,
@@ -26,6 +32,9 @@ class F1Application : Application() {
         ).build()
 
         // Initialize Retrofit
+        val apiBaseUrl = "https://api.jolpi.ca/ergast/"
+        AppLogger.d("F1Application", "Initializing Retrofit with base URL: $apiBaseUrl")
+
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -37,7 +46,7 @@ class F1Application : Application() {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.jolpi.ca/ergast/")
+            .baseUrl(apiBaseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -45,6 +54,9 @@ class F1Application : Application() {
         val apiService = retrofit.create(F1ApiService::class.java)
 
         // Initialize Repository
+        AppLogger.d("F1Application", "Initializing Repository")
         repository = F1Repository(apiService, database.raceDao())
+
+        AppLogger.i("F1Application", "App initialization complete")
     }
 }
