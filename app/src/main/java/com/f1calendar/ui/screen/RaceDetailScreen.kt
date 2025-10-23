@@ -46,9 +46,22 @@ fun RaceDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(race.raceName) },
+                title = {
+                    Text(
+                        if (selectedSession != null) "$selectedSession Results"
+                        else race.raceName
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = {
+                            if (selectedSession != null) {
+                                selectedSession = null
+                            } else {
+                                onBackClick()
+                            }
+                        }
+                    ) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -76,6 +89,12 @@ fun RaceDetailScreen(
                             "Race" -> viewModel.loadRaceResults(race.round)
                             "Qualifying" -> viewModel.loadQualifyingResults(race.round)
                             "Sprint" -> viewModel.loadSprintResults(race.round)
+                            "SprintShootout" -> viewModel.loadQualifyingResults(race.round) // Sprint shootout uses qualifying format
+                            "Practice1", "Practice2", "Practice3" -> {
+                                // Practice sessions - API may not have detailed results
+                                // Load as race results to show positions/times if available
+                                viewModel.loadRaceResults(race.round)
+                            }
                         }
                     }
                 )
@@ -183,7 +202,8 @@ private fun RaceDetailsView(
         val isSprint = race.sprint != null
 
         if (isSprint) {
-            // Sprint weekend order: FP1, Sprint Qualifying, Sprint, Qualifying, Race
+            // Sprint weekend order: FP1, Qualifying (for race), Sprint Shootout, Sprint, Race
+            // Note: Sprint Shootout may not be in API data
 
             // Practice 1
             race.firstPractice?.let { session ->
@@ -198,15 +218,29 @@ private fun RaceDetailsView(
                 }
             }
 
-            // Sprint Qualifying (this is the qualifying session on sprint weekends)
+            // Qualifying (for the main race - happens on Friday for sprint weekends)
             race.qualifying?.let { session ->
                 item {
                     SessionCard(
-                        name = "Sprint Qualifying",
+                        name = "Qualifying",
                         date = session.date,
                         time = session.time,
                         isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("SprintQualifying") } } else null
+                        onClick = if (isCompleted) { { onSessionClick("Qualifying") } } else null
+                    )
+                }
+            }
+
+            // Sprint Shootout (may not be in API - using sprint session as indicator)
+            race.sprint?.let { session ->
+                // Show a placeholder for Sprint Shootout if we're before the sprint
+                item {
+                    SessionCard(
+                        name = "Sprint Shootout",
+                        date = session.date,
+                        time = session.time,
+                        isCompleted = isCompleted,
+                        onClick = if (isCompleted) { { onSessionClick("SprintShootout") } } else null
                     )
                 }
             }
@@ -220,32 +254,6 @@ private fun RaceDetailsView(
                         time = session.time,
                         isCompleted = isCompleted,
                         onClick = if (isCompleted) { { onSessionClick("Sprint") } } else null
-                    )
-                }
-            }
-
-            // Practice 2 (some sprint weekends have this)
-            race.secondPractice?.let { session ->
-                item {
-                    SessionCard(
-                        name = "Practice 2",
-                        date = session.date,
-                        time = session.time,
-                        isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice2") } } else null
-                    )
-                }
-            }
-
-            // Practice 3 (some sprint weekends have this)
-            race.thirdPractice?.let { session ->
-                item {
-                    SessionCard(
-                        name = "Practice 3",
-                        date = session.date,
-                        time = session.time,
-                        isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice3") } } else null
                     )
                 }
             }
@@ -385,16 +393,6 @@ private fun SessionResultsView(
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Back button
-        TextButton(
-            onClick = onBack,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("Back to Sessions")
-        }
-
         when (val state = uiState) {
             is SessionResultsUiState.Loading -> {
                 Box(
