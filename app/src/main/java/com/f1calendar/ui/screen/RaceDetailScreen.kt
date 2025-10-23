@@ -160,6 +160,7 @@ private fun RaceDetailsView(
                             contentAlignment = Alignment.Center
                         ) {
                             TrackMapView(
+                                circuitId = race.circuit.circuitId,
                                 trackColor = MaterialTheme.colorScheme.primary,
                                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
                             )
@@ -670,6 +671,7 @@ private fun QualifyingResultCard(result: QualifyingResult) {
 
 @Composable
 private fun TrackMapView(
+    circuitId: String,
     trackColor: Color,
     backgroundColor: Color
 ) {
@@ -682,53 +684,7 @@ private fun TrackMapView(
         val height = size.height
         val strokeWidth = 8f
 
-        // Draw a generic racing circuit layout
-        val path = Path().apply {
-            // Start/Finish straight
-            moveTo(width * 0.1f, height * 0.5f)
-            lineTo(width * 0.35f, height * 0.5f)
-
-            // First corner (hairpin turn)
-            cubicTo(
-                width * 0.45f, height * 0.5f,
-                width * 0.5f, height * 0.6f,
-                width * 0.5f, height * 0.7f
-            )
-
-            // Back straight
-            cubicTo(
-                width * 0.5f, height * 0.8f,
-                width * 0.6f, height * 0.85f,
-                width * 0.75f, height * 0.8f
-            )
-
-            // Chicane
-            cubicTo(
-                width * 0.85f, height * 0.77f,
-                width * 0.88f, height * 0.65f,
-                width * 0.85f, height * 0.55f
-            )
-
-            // Final corner
-            cubicTo(
-                width * 0.82f, height * 0.45f,
-                width * 0.75f, height * 0.35f,
-                width * 0.65f, height * 0.3f
-            )
-
-            // Long sweeping turn back to start
-            cubicTo(
-                width * 0.5f, height * 0.23f,
-                width * 0.3f, height * 0.25f,
-                width * 0.15f, height * 0.35f
-            )
-
-            cubicTo(
-                width * 0.08f, height * 0.4f,
-                width * 0.08f, height * 0.45f,
-                width * 0.1f, height * 0.5f
-            )
-        }
+        val path = getCircuitPath(circuitId, width, height)
 
         // Draw track background (wider)
         drawPath(
@@ -773,6 +729,98 @@ private fun TrackMapView(
                 radius = checkSize,
                 center = Offset(width * 0.1f + checkSize, y)
             )
+        }
+    }
+}
+
+private fun getCircuitPath(circuitId: String, width: Float, height: Float): Path {
+    return Path().apply {
+        when (circuitId.lowercase()) {
+            "monaco" -> {
+                // Monaco - tight street circuit with hairpin
+                moveTo(width * 0.15f, height * 0.4f)
+                lineTo(width * 0.3f, height * 0.4f)
+                cubicTo(width * 0.35f, height * 0.4f, width * 0.38f, height * 0.35f, width * 0.42f, height * 0.3f)
+                cubicTo(width * 0.48f, height * 0.22f, width * 0.55f, height * 0.2f, width * 0.62f, height * 0.25f)
+                lineTo(width * 0.72f, height * 0.32f)
+                cubicTo(width * 0.78f, height * 0.37f, width * 0.8f, height * 0.45f, width * 0.82f, height * 0.55f)
+                cubicTo(width * 0.82f, height * 0.65f, width * 0.75f, height * 0.7f, width * 0.68f, height * 0.73f)
+                cubicTo(width * 0.6f, height * 0.76f, width * 0.5f, height * 0.78f, width * 0.42f, height * 0.75f)
+                cubicTo(width * 0.32f, height * 0.72f, width * 0.25f, height * 0.65f, width * 0.2f, height * 0.58f)
+                cubicTo(width * 0.16f, height * 0.52f, width * 0.14f, height * 0.46f, width * 0.15f, height * 0.4f)
+            }
+            "silverstone" -> {
+                // Silverstone - fast flowing corners
+                moveTo(width * 0.1f, height * 0.5f)
+                lineTo(width * 0.25f, height * 0.5f)
+                cubicTo(width * 0.32f, height * 0.5f, width * 0.38f, height * 0.45f, width * 0.45f, height * 0.38f)
+                cubicTo(width * 0.52f, height * 0.3f, width * 0.6f, height * 0.28f, width * 0.68f, height * 0.32f)
+                cubicTo(width * 0.76f, height * 0.36f, width * 0.82f, height * 0.44f, width * 0.85f, height * 0.53f)
+                cubicTo(width * 0.87f, height * 0.62f, width * 0.85f, height * 0.7f, width * 0.78f, height * 0.75f)
+                cubicTo(width * 0.7f, height * 0.8f, width * 0.6f, height * 0.82f, width * 0.5f, height * 0.8f)
+                cubicTo(width * 0.38f, height * 0.78f, width * 0.28f, height * 0.72f, width * 0.2f, height * 0.64f)
+                cubicTo(width * 0.13f, height * 0.58f, width * 0.1f, height * 0.54f, width * 0.1f, height * 0.5f)
+            }
+            "spa" -> {
+                // Spa - long fast circuit with Eau Rouge
+                moveTo(width * 0.1f, height * 0.6f)
+                lineTo(width * 0.25f, height * 0.6f)
+                cubicTo(width * 0.3f, height * 0.6f, width * 0.33f, height * 0.5f, width * 0.36f, height * 0.4f)
+                cubicTo(width * 0.39f, height * 0.3f, width * 0.45f, height * 0.25f, width * 0.55f, height * 0.25f)
+                lineTo(width * 0.7f, height * 0.25f)
+                cubicTo(width * 0.78f, height * 0.25f, width * 0.84f, height * 0.3f, width * 0.88f, height * 0.38f)
+                cubicTo(width * 0.9f, height * 0.48f, width * 0.88f, height * 0.58f, width * 0.82f, height * 0.66f)
+                cubicTo(width * 0.75f, height * 0.74f, width * 0.65f, height * 0.78f, width * 0.55f, height * 0.8f)
+                cubicTo(width * 0.42f, height * 0.82f, width * 0.3f, height * 0.8f, width * 0.2f, height * 0.75f)
+                cubicTo(width * 0.13f, height * 0.7f, width * 0.1f, height * 0.65f, width * 0.1f, height * 0.6f)
+            }
+            "monza" -> {
+                // Monza - high speed with chicanes
+                moveTo(width * 0.15f, height * 0.5f)
+                lineTo(width * 0.35f, height * 0.5f)
+                cubicTo(width * 0.4f, height * 0.5f, width * 0.43f, height * 0.45f, width * 0.45f, height * 0.4f)
+                cubicTo(width * 0.47f, height * 0.37f, width * 0.5f, height * 0.36f, width * 0.53f, height * 0.38f)
+                cubicTo(width * 0.56f, height * 0.4f, width * 0.58f, height * 0.43f, width * 0.6f, height * 0.45f)
+                lineTo(width * 0.75f, height * 0.45f)
+                cubicTo(width * 0.82f, height * 0.45f, width * 0.87f, height * 0.52f, width * 0.88f, height * 0.6f)
+                cubicTo(width * 0.87f, height * 0.68f, width * 0.82f, height * 0.73f, width * 0.75f, height * 0.75f)
+                cubicTo(width * 0.6f, height * 0.78f, width * 0.45f, height * 0.77f, width * 0.32f, height * 0.72f)
+                cubicTo(width * 0.22f, height * 0.68f, width * 0.15f, height * 0.6f, width * 0.15f, height * 0.5f)
+            }
+            "suzuka" -> {
+                // Suzuka - figure-8 layout
+                moveTo(width * 0.1f, height * 0.55f)
+                lineTo(width * 0.25f, height * 0.55f)
+                cubicTo(width * 0.35f, height * 0.55f, width * 0.42f, height * 0.48f, width * 0.48f, height * 0.4f)
+                cubicTo(width * 0.54f, height * 0.32f, width * 0.62f, height * 0.3f, width * 0.7f, height * 0.35f)
+                cubicTo(width * 0.77f, height * 0.4f, width * 0.8f, height * 0.48f, width * 0.78f, height * 0.56f)
+                cubicTo(width * 0.76f, height * 0.64f, width * 0.7f, height * 0.7f, width * 0.62f, height * 0.72f)
+                cubicTo(width * 0.52f, height * 0.74f, width * 0.42f, height * 0.72f, width * 0.34f, height * 0.68f)
+                cubicTo(width * 0.24f, height * 0.63f, width * 0.16f, height * 0.58f, width * 0.1f, height * 0.55f)
+            }
+            "interlagos" -> {
+                // Interlagos - elevation changes and curves
+                moveTo(width * 0.12f, height * 0.5f)
+                lineTo(width * 0.28f, height * 0.5f)
+                cubicTo(width * 0.35f, height * 0.5f, width * 0.4f, height * 0.42f, width * 0.42f, height * 0.33f)
+                cubicTo(width * 0.44f, height * 0.26f, width * 0.5f, height * 0.22f, width * 0.57f, height * 0.24f)
+                cubicTo(width * 0.65f, height * 0.26f, width * 0.72f, height * 0.32f, width * 0.78f, height * 0.4f)
+                cubicTo(width * 0.84f, height * 0.5f, width * 0.86f, height * 0.6f, width * 0.82f, height * 0.69f)
+                cubicTo(width * 0.77f, height * 0.77f, width * 0.68f, height * 0.82f, width * 0.58f, height * 0.83f)
+                cubicTo(width * 0.45f, height * 0.84f, width * 0.33f, height * 0.8f, width * 0.24f, height * 0.72f)
+                cubicTo(width * 0.16f, height * 0.64f, width * 0.12f, height * 0.57f, width * 0.12f, height * 0.5f)
+            }
+            else -> {
+                // Default generic circuit for unknown tracks
+                moveTo(width * 0.1f, height * 0.5f)
+                lineTo(width * 0.35f, height * 0.5f)
+                cubicTo(width * 0.45f, height * 0.5f, width * 0.5f, height * 0.6f, width * 0.5f, height * 0.7f)
+                cubicTo(width * 0.5f, height * 0.8f, width * 0.6f, height * 0.85f, width * 0.75f, height * 0.8f)
+                cubicTo(width * 0.85f, height * 0.77f, width * 0.88f, height * 0.65f, width * 0.85f, height * 0.55f)
+                cubicTo(width * 0.82f, height * 0.45f, width * 0.75f, height * 0.35f, width * 0.65f, height * 0.3f)
+                cubicTo(width * 0.5f, height * 0.23f, width * 0.3f, height * 0.25f, width * 0.15f, height * 0.35f)
+                cubicTo(width * 0.08f, height * 0.4f, width * 0.08f, height * 0.45f, width * 0.1f, height * 0.5f)
+            }
         }
     }
 }
