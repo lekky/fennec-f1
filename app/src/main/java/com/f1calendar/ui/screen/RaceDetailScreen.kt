@@ -26,8 +26,6 @@ import com.f1calendar.ui.viewmodel.SessionResultsUiState
 import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.DateTimeUtil
 import com.f1calendar.util.TeamColors
-import com.f1calendar.util.TrackLayouts
-import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,40 +137,6 @@ private fun RaceDetailsView(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
-
-                    // Track map view
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "TRACK LAYOUT",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            TrackMapView(
-                                circuitId = race.circuit.circuitId
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -650,37 +614,6 @@ private fun QualifyingResultCard(result: QualifyingResult) {
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun TrackMapView(
-    circuitId: String
-) {
-    val trackLayoutUrl = TrackLayouts.getTrackLayoutUrl(circuitId)
-
-    if (trackLayoutUrl != null) {
-        AsyncImage(
-            model = trackLayoutUrl,
-            contentDescription = "Track layout for $circuitId",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            contentScale = androidx.compose.ui.layout.ContentScale.Fit
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Track layout not available",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
