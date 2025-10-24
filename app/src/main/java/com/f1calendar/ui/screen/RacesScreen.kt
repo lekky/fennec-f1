@@ -94,6 +94,16 @@ private fun RacesList(
 ) {
     val upcomingRaces = races.filter { !DateTimeUtil.isRaceCompleted(it.date) }
     val completedRaces = races.filter { DateTimeUtil.isRaceCompleted(it.date) }
+
+    // Get most recent race (last completed)
+    val mostRecentRace = completedRaces.lastOrNull()
+    // Remaining completed races (excluding most recent)
+    val olderCompletedRaces = if (mostRecentRace != null) {
+        completedRaces.dropLast(1)
+    } else {
+        completedRaces
+    }
+
     var completedExpanded by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
@@ -103,8 +113,25 @@ private fun RacesList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Completed Races Section (now shown first)
-        if (completedRaces.isNotEmpty()) {
+        // Most Recent Race Section (highlighted)
+        if (mostRecentRace != null) {
+            item {
+                Text(
+                    text = "MOST RECENT RACE",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = F1Gold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            item {
+                RaceCard(race = mostRecentRace, onClick = { onRaceClick(mostRecentRace) })
+            }
+        }
+
+        // Completed Races Section (collapsed, excluding most recent)
+        if (olderCompletedRaces.isNotEmpty()) {
             item {
                 Card(
                     modifier = Modifier
@@ -129,7 +156,7 @@ private fun RacesList(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "${completedRaces.size} races",
+                                text = "${olderCompletedRaces.size} races",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
@@ -143,13 +170,13 @@ private fun RacesList(
             }
 
             if (completedExpanded) {
-                items(completedRaces.reversed()) { race ->
+                items(olderCompletedRaces.reversed()) { race ->
                     RaceCard(race = race, onClick = { onRaceClick(race) })
                 }
             }
         }
 
-        // Upcoming Races Section (now shown after completed)
+        // Upcoming Races Section
         if (upcomingRaces.isNotEmpty()) {
             item {
                 Text(
