@@ -85,11 +85,6 @@ fun RaceDetailScreen(
                             "Qualifying" -> viewModel.loadQualifyingResults(race.round)
                             "Sprint" -> viewModel.loadSprintResults(race.round)
                             "SprintShootout" -> viewModel.loadQualifyingResults(race.round) // Sprint shootout uses qualifying format
-                            "Practice1", "Practice2", "Practice3" -> {
-                                // Practice sessions - API may not have detailed results
-                                // Load as race results to show positions/times if available
-                                viewModel.loadRaceResults(race.round)
-                            }
                         }
                     }
                 )
@@ -198,7 +193,7 @@ private fun RaceDetailsView(
             // Sprint weekend order: FP1, Qualifying (for race), Sprint Shootout, Sprint, Race
             // Note: Sprint Shootout may not be in API data
 
-            // Practice 1
+            // Practice 1 (no results available in API)
             race.firstPractice?.let { session ->
                 item {
                     SessionCard(
@@ -206,7 +201,7 @@ private fun RaceDetailsView(
                         date = session.date,
                         time = session.time,
                         isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice1") } } else null
+                        onClick = null // Practice results not available in F1 API
                     )
                 }
             }
@@ -253,7 +248,7 @@ private fun RaceDetailsView(
         } else {
             // Normal weekend: FP1, FP2, FP3, Qualifying, Race
 
-            // Practice 1
+            // Practice 1 (no results available in API)
             race.firstPractice?.let { session ->
                 item {
                     SessionCard(
@@ -261,12 +256,12 @@ private fun RaceDetailsView(
                         date = session.date,
                         time = session.time,
                         isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice1") } } else null
+                        onClick = null // Practice results not available in F1 API
                     )
                 }
             }
 
-            // Practice 2
+            // Practice 2 (no results available in API)
             race.secondPractice?.let { session ->
                 item {
                     SessionCard(
@@ -274,12 +269,12 @@ private fun RaceDetailsView(
                         date = session.date,
                         time = session.time,
                         isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice2") } } else null
+                        onClick = null // Practice results not available in F1 API
                     )
                 }
             }
 
-            // Practice 3
+            // Practice 3 (no results available in API)
             race.thirdPractice?.let { session ->
                 item {
                     SessionCard(
@@ -287,7 +282,7 @@ private fun RaceDetailsView(
                         date = session.date,
                         time = session.time,
                         isCompleted = isCompleted,
-                        onClick = if (isCompleted) { { onSessionClick("Practice3") } } else null
+                        onClick = null // Practice results not available in F1 API
                     )
                 }
             }
