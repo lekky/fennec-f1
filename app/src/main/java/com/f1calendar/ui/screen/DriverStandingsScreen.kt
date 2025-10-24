@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
@@ -23,8 +22,9 @@ import com.f1calendar.ui.viewmodel.DriverStandingsUiState
 import com.f1calendar.ui.viewmodel.DriverStandingsViewModel
 import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.TeamColors
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DriverStandingsScreen(
     viewModel: DriverStandingsViewModel
@@ -44,8 +44,8 @@ fun DriverStandingsScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
             onRefresh = {
                 isRefreshing = true
                 viewModel.refresh()

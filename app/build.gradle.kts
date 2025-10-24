@@ -85,6 +85,9 @@ dependencies {
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // Accompanist for SwipeRefresh
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 

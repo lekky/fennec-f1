@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
@@ -28,8 +27,9 @@ import com.f1calendar.ui.viewmodel.ConstructorStandingsViewModel
 import com.f1calendar.util.TeamColors
 import com.f1calendar.util.TeamLogos
 import coil.compose.AsyncImage
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConstructorStandingsScreen(
     viewModel: ConstructorStandingsViewModel
@@ -49,8 +49,8 @@ fun ConstructorStandingsScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing),
             onRefresh = {
                 isRefreshing = true
                 viewModel.refresh()

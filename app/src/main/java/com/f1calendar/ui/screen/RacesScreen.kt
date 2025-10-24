@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -29,8 +28,9 @@ import com.f1calendar.ui.viewmodel.RacesUiState
 import com.f1calendar.ui.viewmodel.RacesViewModel
 import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.DateTimeUtil
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RacesScreen(
     viewModel: RacesViewModel,
@@ -46,8 +46,8 @@ fun RacesScreen(
         }
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
         onRefresh = {
             isRefreshing = true
             viewModel.refresh()
