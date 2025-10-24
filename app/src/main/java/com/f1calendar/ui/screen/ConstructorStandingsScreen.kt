@@ -202,7 +202,7 @@ private fun ConstructorStandingsList(
     ) {
         item {
             Text(
-                text = "🏆 CONSTRUCTORS CHAMPIONSHIP",
+                text = "CONSTRUCTORS CHAMPIONSHIP",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)

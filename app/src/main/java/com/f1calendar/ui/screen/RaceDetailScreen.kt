@@ -72,8 +72,7 @@ fun RaceDetailScreen(
             if (selectedSession != null) {
                 SessionResultsView(
                     viewModel = viewModel,
-                    sessionName = selectedSession!!,
-                    onBack = { selectedSession = null }
+                    sessionName = selectedSession!!
                 )
             } else {
                 RaceDetailsView(
@@ -185,7 +184,7 @@ private fun RaceDetailsView(
 
         item {
             Text(
-                text = "📊 SESSIONS",
+                text = "SESSIONS",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp)
@@ -311,7 +310,7 @@ private fun RaceDetailsView(
         race.time?.let { time ->
             item {
                 SessionCard(
-                    name = "🏆 RACE",
+                    name = "RACE",
                     date = race.date,
                     time = time,
                     isCompleted = isCompleted,
@@ -381,8 +380,7 @@ private fun SessionCard(
 @Composable
 private fun SessionResultsView(
     viewModel: RaceDetailViewModel,
-    sessionName: String,
-    onBack: () -> Unit
+    sessionName: String
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

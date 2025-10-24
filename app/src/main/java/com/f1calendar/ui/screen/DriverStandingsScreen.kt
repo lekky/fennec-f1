@@ -140,7 +140,7 @@ private fun DriverStandingsList(
     ) {
         item {
             Text(
-                text = "🏆 DRIVERS CHAMPIONSHIP",
+                text = "DRIVERS CHAMPIONSHIP",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
