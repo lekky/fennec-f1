@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ import com.f1calendar.ui.viewmodel.DriverStandingsViewModel
 import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.TeamColors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DriverStandingsScreen(
     viewModel: DriverStandingsViewModel
@@ -31,57 +33,75 @@ fun DriverStandingsScreen(
     var selectedDriver by remember { mutableStateOf<DriverStanding?>(null) }
     var driverResults by remember { mutableStateOf<List<RacePoints>>(emptyList()) }
     var isLoadingResults by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // Handle refresh state
+    LaunchedEffect(uiState) {
+        if (uiState !is DriverStandingsUiState.Loading || !isRefreshing) {
+            isRefreshing = false
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is DriverStandingsUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refresh()
             }
-
-            is DriverStandingsUiState.Success -> {
-                DriverStandingsList(
-                    standings = state.standings,
-                    onDriverClick = { driver ->
-                        selectedDriver = driver
-                        isLoadingResults = true
-                        coroutineScope.launch {
-                            val results = viewModel.getDriverResults(driver.driver.driverId)
-
-                            // Calculate running totals
-                            var runningTotal = 0.0
-                            driverResults = results.map { result ->
-                                val pointsEarned = result.points.toDoubleOrNull() ?: 0.0
-                                runningTotal += pointsEarned
-                                RacePoints(
-                                    raceName = result.raceName,
-                                    round = result.round,
-                                    position = result.position,
-                                    points = result.points,
-                                    runningTotal = runningTotal.toInt().toString()
-                                )
-                            }
-                            isLoadingResults = false
+        ) {
+            when (val state = uiState) {
+                is DriverStandingsUiState.Loading -> {
+                    if (!isRefreshing) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
                     }
-                )
-            }
+                }
 
-            is DriverStandingsUiState.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "Error: ${state.message}")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.refresh() }) {
-                            Text("Retry")
+                is DriverStandingsUiState.Success -> {
+                    DriverStandingsList(
+                        standings = state.standings,
+                        onDriverClick = { driver ->
+                            selectedDriver = driver
+                            isLoadingResults = true
+                            coroutineScope.launch {
+                                val results = viewModel.getDriverResults(driver.driver.driverId)
+
+                                // Calculate running totals
+                                var runningTotal = 0.0
+                                driverResults = results.map { result ->
+                                    val pointsEarned = result.points.toDoubleOrNull() ?: 0.0
+                                    runningTotal += pointsEarned
+                                    RacePoints(
+                                        raceName = result.raceName,
+                                        round = result.round,
+                                        position = result.position,
+                                        points = result.points,
+                                        runningTotal = runningTotal.toInt().toString()
+                                    )
+                                }
+                                isLoadingResults = false
+                            }
+                        }
+                    )
+                }
+
+                is DriverStandingsUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Error: ${state.message}")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { viewModel.refresh() }) {
+                                Text("Retry")
+                            }
                         }
                     }
                 }

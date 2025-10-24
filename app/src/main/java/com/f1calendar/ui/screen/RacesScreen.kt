@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -29,37 +30,56 @@ import com.f1calendar.ui.viewmodel.RacesViewModel
 import com.f1calendar.util.CountryFlags
 import com.f1calendar.util.DateTimeUtil
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RacesScreen(
     viewModel: RacesViewModel,
     onRaceClick: (Race) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    when (val state = uiState) {
-        is RacesUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+    // Handle refresh state
+    LaunchedEffect(uiState) {
+        if (uiState !is RacesUiState.Loading || !isRefreshing) {
+            isRefreshing = false
+        }
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.refresh()
+        }
+    ) {
+        when (val state = uiState) {
+            is RacesUiState.Loading -> {
+                if (!isRefreshing) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
-        }
 
-        is RacesUiState.Success -> {
-            RacesList(races = state.races, onRaceClick = onRaceClick)
-        }
+            is RacesUiState.Success -> {
+                RacesList(races = state.races, onRaceClick = onRaceClick)
+            }
 
-        is RacesUiState.Error -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Error: ${state.message}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.refresh() }) {
-                        Text("Retry")
+            is RacesUiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "Error: ${state.message}")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.refresh() }) {
+                            Text("Retry")
+                        }
                     }
                 }
             }

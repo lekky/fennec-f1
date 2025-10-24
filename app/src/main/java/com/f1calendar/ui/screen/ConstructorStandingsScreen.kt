@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
@@ -28,6 +29,7 @@ import com.f1calendar.util.TeamColors
 import com.f1calendar.util.TeamLogos
 import coil.compose.AsyncImage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConstructorStandingsScreen(
     viewModel: ConstructorStandingsViewModel
@@ -36,56 +38,74 @@ fun ConstructorStandingsScreen(
     var selectedConstructor by remember { mutableStateOf<ConstructorStanding?>(null) }
     var constructorResults by remember { mutableStateOf<List<RacePoints>>(emptyList()) }
     var isLoadingResults by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // Handle refresh state
+    LaunchedEffect(uiState) {
+        if (uiState !is ConstructorStandingsUiState.Loading || !isRefreshing) {
+            isRefreshing = false
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is ConstructorStandingsUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refresh()
             }
-
-            is ConstructorStandingsUiState.Success -> {
-                ConstructorStandingsList(
-                    standings = state.standings,
-                    onConstructorClick = { constructor ->
-                        selectedConstructor = constructor
-                        isLoadingResults = true
-                        coroutineScope.launch {
-                            val results = viewModel.getConstructorResults(constructor.constructor.constructorId)
-
-                            // Calculate running totals
-                            var runningTotal = 0
-                            constructorResults = results.map { result ->
-                                runningTotal += result.points
-                                RacePoints(
-                                    raceName = result.raceName,
-                                    round = result.round,
-                                    position = null, // Constructors don't have a single position
-                                    points = result.points.toString(),
-                                    runningTotal = runningTotal.toString()
-                                )
-                            }
-                            isLoadingResults = false
+        ) {
+            when (val state = uiState) {
+                is ConstructorStandingsUiState.Loading -> {
+                    if (!isRefreshing) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
                     }
-                )
-            }
+                }
 
-            is ConstructorStandingsUiState.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "Error: ${state.message}")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.refresh() }) {
-                            Text("Retry")
+                is ConstructorStandingsUiState.Success -> {
+                    ConstructorStandingsList(
+                        standings = state.standings,
+                        onConstructorClick = { constructor ->
+                            selectedConstructor = constructor
+                            isLoadingResults = true
+                            coroutineScope.launch {
+                                val results = viewModel.getConstructorResults(constructor.constructor.constructorId)
+
+                                // Calculate running totals
+                                var runningTotal = 0
+                                constructorResults = results.map { result ->
+                                    runningTotal += result.points
+                                    RacePoints(
+                                        raceName = result.raceName,
+                                        round = result.round,
+                                        position = null, // Constructors don't have a single position
+                                        points = result.points.toString(),
+                                        runningTotal = runningTotal.toString()
+                                    )
+                                }
+                                isLoadingResults = false
+                            }
+                        }
+                    )
+                }
+
+                is ConstructorStandingsUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Error: ${state.message}")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = { viewModel.refresh() }) {
+                                Text("Retry")
+                            }
                         }
                     }
                 }
