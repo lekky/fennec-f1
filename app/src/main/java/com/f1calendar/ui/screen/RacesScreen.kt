@@ -170,7 +170,10 @@ private fun RacesList(
             }
 
             if (completedExpanded) {
-                items(olderCompletedRaces.reversed()) { race ->
+                items(
+                    items = olderCompletedRaces.reversed(),
+                    key = { race -> race.round }
+                ) { race ->
                     RaceCard(race = race, onClick = { onRaceClick(race) })
                 }
             }
@@ -188,7 +191,10 @@ private fun RacesList(
                 )
             }
 
-            items(upcomingRaces) { race ->
+            items(
+                items = upcomingRaces,
+                key = { race -> race.round }
+            ) { race ->
                 RaceCard(race = race, onClick = { onRaceClick(race) })
             }
         }
