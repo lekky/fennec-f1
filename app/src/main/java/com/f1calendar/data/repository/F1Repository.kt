@@ -8,7 +8,6 @@ import com.f1calendar.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import java.util.Calendar
 
 class F1Repository(
     private val apiService: F1ApiService,
@@ -166,8 +165,7 @@ class F1Repository(
     }
 
     private fun getCurrentSeason(): String {
-        // Jolpica F1 API supports 2025 season data
-        return Calendar.getInstance().get(Calendar.YEAR).toString()
+        return "2026"
     }
 
     private fun RaceResponse.toRace(): Race {

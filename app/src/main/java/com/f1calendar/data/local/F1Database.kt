@@ -10,7 +10,7 @@ import com.f1calendar.data.model.Race
 
 @Database(
     entities = [Race::class, Driver::class, Constructor::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

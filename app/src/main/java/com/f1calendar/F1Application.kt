@@ -29,7 +29,7 @@ class F1Application : Application() {
             applicationContext,
             F1Database::class.java,
             "f1_database"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
 
         // Initialize Retrofit
         val apiBaseUrl = "https://api.jolpi.ca/ergast/"
